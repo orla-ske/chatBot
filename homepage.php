@@ -45,6 +45,89 @@ require_once 'dbconfig/config.php';
                 <div class="card">
                     <div class="card-body messages-box">
                         <ul class="list-unstyled messages-list">
-    
-</body>
+                            <?php
+                            $sql = "SELECT * FROM message"; 
+                            $stmt = $db -> prepare($sql); 
+                            $stmt-> execute(); 
+
+                            if($stmt->rowCount()>0){
+                                $content=''; 
+                                while($row = $stmt->fetch(PDO::FETCH_ASSOC)){
+                                    $message = $row['message']; 
+                                    $added_on = $row['added_on']; 
+                                    $strtotime = strtotime($added_on); 
+                                    $time = date('h:i A', $strtotime); 
+                                    $type = $row['type']; 
+                                    if($type == 'user'){
+                                        $class="message-me";
+                                        $imgavatar = "user_avatar.png";
+                                        $name = "Me";
+                                    }else{
+                                        $class="message-you";
+                                        $imgavatar = "bot_avatar.png";
+                                        $name = "Chatbot";
+                                    }
+                                    $content .= '<li class="'.$class.' clearfix"><span class="message-img"><img src="image/'.$imgAvatar.'" class="avatar-sm rounded-circle"></span><div class="message-body clearfix"><div class="message-header"><strong class="messages-title">'.$name.'</strong> <small class="time-messages text-muted"><span class="fas fa-time"></span> <span class="minutes">'.$time.'</span></small> </div><p class="messages-p">'.$message.'</p></div></li>';
+                                }
+                            }else{
+                                ?>
+                                <li class="messages-me clearfix start_chat">
+								   Please start
+								</li>
+                                <?php
+                            }
+                            $stmt -> closeCursor();
+                            ?>
+                        </ul>
+                    </div>
+                    <div class="card-header">
+                        <div class="input-group">
+                            <input id="input-me" type="text" name="messages" class="form-control input-sm" placeholder="Input message here..." />
+                            <span class="input-group-append">
+                                <input type="button" class="btn btn-primary" value ="Send" onclick="send_msg()">
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javacript">
+        function getCurrentTime(){
+			var now = new Date();
+			var hh = now.getHours();
+			var min = now.getMinutes();
+			var ampm = (hh>=12)?'PM':'AM';
+			hh = hh%12;
+			hh = hh?hh:12;
+			hh = hh<10?'0'+hh:hh;
+			min = min<10?'0'+min:min;
+			var time = hh+":"+min+" "+ampm;
+			return time;
+		 }
+		 function send_msg(){
+            jQuery('.start_chat').hide();
+			var txt=jQuery('#input-me').val();
+			var html='<li class="messages-me clearfix"><span class="message-img"><img src="image/user_avatar.png" class="avatar-sm rounded-circle"></span><div class="message-body clearfix"><div class="message-header"><strong class="messages-title">Me</strong> <small class="time-messages text-muted"><span class="fas fa-time"></span> <span class="minutes">'+getCurrentTime()+'</span></small> </div><p class="messages-p">'+txt+'</p></div></li>';    
+
+			jQuery('.messages-list').append(html);
+			jQuery('#input-me').val('');
+			if(txt){
+				jQuery.ajax({
+					url:'get_bot_message.php',
+					type:'post',
+					data:'txt='+txt,
+					success:function(result){
+
+						var html='<li class="messages-you clearfix"><span class="message-img"><img src="image/bot_avatar.png" class="avatar-sm rounded-circle"></span><div class="message-body clearfix"><div class="message-header"><strong class="messages-title">Chatbot</strong> <small class="time-messages text-muted"><span class="fas fa-time"></span> <span class="minutes">'+getCurrentTime()+'</span></small> </div><p class="messages-p">'+result+'</p></div></li><a href="invalidans.php" id="invalid_btn"><i>Invalid Answer ?</i></a>';
+						
+						jQuery('.messages-list').append(html);
+						jQuery('.messages-box').scrollTop(jQuery('.messages-box')[0].scrollHeight);
+					}
+				});
+			}
+		 }
+      </script>
+
+    </body>
 </html>
